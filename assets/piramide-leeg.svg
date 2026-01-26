@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+  <defs>
+    <style>
+      .geel { fill: #f7e600; stroke: #333; stroke-width: 1; }
+      .groen-licht { fill: #4a9c2d; stroke: #333; stroke-width: 1; }
+      .groen-donker { fill: #1a5c1a; stroke: #333; stroke-width: 1; }
+      .oranje { fill: #f7941d; stroke: #333; stroke-width: 1; }
+      .tekst { font-family: Arial, sans-serif; font-size: 12px; fill: white; text-anchor: middle; }
+      .trede-label { font-family: Arial, sans-serif; font-size: 14px; fill: #333; font-weight: bold; }
+    </style>
+  </defs>
+
+  <!-- Achtergrond -->
+  <rect width="1200" height="700" fill="#1a1a2e"/>
+
+  <!-- Gele piramide driehoek (achtergrond) -->
+  <polygon points="50,600 450,100 450,600" fill="#f7e600" stroke="#333" stroke-width="2"/>
+
+  <!-- Trede labels links -->
+  <text x="30" y="580" class="trede-label" fill="#fff" text-anchor="end">1. Inzicht</text>
+  <text x="30" y="500" class="trede-label" fill="#fff" text-anchor="end">2. Beheersen</text>
+  <text x="30" y="420" class="trede-label" fill="#fff" text-anchor="end">3. Verbeteren</text>
+  <text x="30" y="340" class="trede-label" fill="#fff" text-anchor="end">4. Van buiten naar binnen</text>
+  <text x="30" y="260" class="trede-label" fill="#fff" text-anchor="end">5. Met ketenpartners klantgericht</text>
+  <text x="30" y="180" class="trede-label" fill="#fff" text-anchor="end">6. Continu verbeteren voor de klant</text>
+
+  <!-- TREDE 1 - Inzicht (7 gele bouwblokken) -->
+  <!-- Bouwblok vorm: LEGO-achtige blokken -->
+  <g id="trede1">
+    <rect x="100" y="550" width="120" height="50" rx="5" class="geel"/>
+    <rect x="230" y="550" width="120" height="50" rx="5" class="geel"/>
+    <rect x="360" y="550" width="120" height="50" rx="5" class="geel"/>
+    <rect x="490" y="550" width="120" height="50" rx="5" class="geel"/>
+    <rect x="620" y="550" width="120" height="50" rx="5" class="geel"/>
+    <rect x="750" y="550" width="120" height="50" rx="5" class="geel"/>
+    <rect x="880" y="550" width="120" height="50" rx="5" class="geel"/>
+  </g>
+
+  <!-- TREDE 2 - Beheersen (6 bouwblokken: 2 geel, 4 groen) -->
+  <g id="trede2">
+    <rect x="165" y="470" width="120" height="50" rx="5" class="geel"/>
+    <rect x="295" y="470" width="120" height="50" rx="5" class="geel"/>
+    <rect x="425" y="470" width="120" height="50" rx="5" class="groen-donker"/>
+    <rect x="555" y="470" width="120" height="50" rx="5" class="groen-donker"/>
+    <rect x="685" y="470" width="120" height="50" rx="5" class="groen-licht"/>
+    <rect x="815" y="470" width="120" height="50" rx="5" class="geel"/>
+  </g>
+
+  <!-- TREDE 3 - Verbeteren (5 bouwblokken: mix groen) -->
+  <g id="trede3">
+    <rect x="230" y="390" width="120" height="50" rx="5" class="groen-licht"/>
+    <rect x="360" y="390" width="120" height="50" rx="5" class="groen-licht"/>
+    <rect x="490" y="390" width="120" height="50" rx="5" class="groen-donker"/>
+    <rect x="620" y="390" width="120" height="50" rx="5" class="groen-licht"/>
+    <rect x="750" y="390" width="120" height="50" rx="5" class="groen-licht"/>
+  </g>
+
+  <!-- TREDE 4 - Van buiten naar binnen (3 bouwblokken: groen) -->
+  <g id="trede4">
+    <rect x="295" y="310" width="150" height="50" rx="5" class="groen-licht"/>
+    <rect x="455" y="310" width="150" height="50" rx="5" class="groen-donker"/>
+    <rect x="615" y="310" width="150" height="50" rx="5" class="groen-licht"/>
+  </g>
+
+  <!-- TREDE 5 - Met ketenpartners klantgericht (3 bouwblokken) -->
+  <g id="trede5">
+    <rect x="360" y="230" width="130" height="50" rx="5" class="groen-licht"/>
+    <rect x="500" y="230" width="130" height="50" rx="5" class="groen-donker"/>
+    <rect x="640" y="230" width="130" height="50" rx="5" class="groen-licht"/>
+  </g>
+
+  <!-- TREDE 6 - Continu verbeteren (top: 3 bouwblokken) -->
+  <g id="trede6">
+    <rect x="425" y="150" width="110" height="50" rx="5" class="oranje"/>
+    <rect x="545" y="150" width="110" height="50" rx="5" class="groen-licht"/>
+    <rect x="665" y="150" width="110" height="50" rx="5" class="groen-licht"/>
+  </g>
+
+  <!-- Aspecten rechts (3 gekleurde blokken) -->
+  <g id="aspecten">
+    <rect x="1000" y="200" width="150" height="60" rx="8" class="oranje"/>
+    <rect x="1000" y="280" width="150" height="60" rx="8" class="groen-licht"/>
+    <rect x="1000" y="360" width="150" height="60" rx="8" class="groen-donker"/>
+  </g>
+
+  <!-- LEGO noppen op bouwblokken (decoratief) -->
+  <!-- Trede 1 noppen -->
+  <g fill="#d4c700" opacity="0.5">
+    <circle cx="140" cy="565" r="8"/>
+    <circle cx="170" cy="565" r="8"/>
+    <circle cx="270" cy="565" r="8"/>
+    <circle cx="300" cy="565" r="8"/>
+    <circle cx="400" cy="565" r="8"/>
+    <circle cx="430" cy="565" r="8"/>
+    <circle cx="530" cy="565" r="8"/>
+    <circle cx="560" cy="565" r="8"/>
+    <circle cx="660" cy="565" r="8"/>
+    <circle cx="690" cy="565" r="8"/>
+    <circle cx="790" cy="565" r="8"/>
+    <circle cx="820" cy="565" r="8"/>
+    <circle cx="920" cy="565" r="8"/>
+    <circle cx="950" cy="565" r="8"/>
+  </g>
+
+  <!-- Titel -->
+  <text x="600" y="50" font-family="Arial, sans-serif" font-size="28" fill="#00d4aa" text-anchor="middle" font-weight="bold">Lean Piramide</text>
+
+</svg>
