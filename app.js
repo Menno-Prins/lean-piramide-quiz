@@ -7,6 +7,7 @@ class LeanQuizGame {
         this.currentRound = 0;
         this.currentQuestionIndex = 0;
         this.timeLimit = 60;
+        this.timerMode = 'auto'; // 'auto' of 'manual'
         this.timerInterval = null;
         this.timeRemaining = 0;
         this.score = 0;
@@ -16,6 +17,9 @@ class LeanQuizGame {
         this.currentQuestions = [];
         this.selectedAnswers = [];
         this.questionStartTime = 0;
+        this.hasSubmittedAnswer = false;
+        this.answersReceived = 0;
+        this.pendingFeedback = null; // Opslaan voor later tonen
 
         // DOM elementen
         this.screens = {
@@ -25,6 +29,7 @@ class LeanQuizGame {
             waiting: document.getElementById('waiting-screen'),
             game: document.getElementById('game-screen'),
             feedback: document.getElementById('feedback-screen'),
+            answerWaiting: document.getElementById('answer-waiting-screen'),
             ranking: document.getElementById('ranking-screen'),
             end: document.getElementById('end-screen')
         };
@@ -51,12 +56,14 @@ class LeanQuizGame {
 
         // Game scherm
         document.getElementById('btn-submit-answer').addEventListener('click', () => this.submitAnswer());
+        document.getElementById('btn-end-round').addEventListener('click', () => this.endRoundEarly());
 
         // Ranking scherm
         document.getElementById('btn-next-round').addEventListener('click', () => this.nextRound());
 
         // Eind scherm
         document.getElementById('btn-play-again').addEventListener('click', () => this.resetGame());
+        document.getElementById('btn-replay-round6').addEventListener('click', () => this.replayRound6());
 
         // Enter toets voor inputs
         document.getElementById('game-code').addEventListener('keypress', (e) => {
@@ -161,13 +168,20 @@ class LeanQuizGame {
         this.currentRound = 0;
         this.answers = {};
 
+        // Lees timer modus
+        this.timerMode = document.querySelector('input[name="timer-mode"]:checked').value;
+
         // Reset scores voor alle spelers
         this.players.forEach(p => p.score = 0);
+
+        // Update totaal aantal rondes in UI
+        document.getElementById('total-rounds').textContent = rondeConfig.length;
 
         // Broadcast naar alle spelers
         peerConnection.broadcast({
             type: 'game-start',
-            timeLimit: this.timeLimit
+            timeLimit: this.timeLimit,
+            timerMode: this.timerMode
         });
 
         this.startRound();
@@ -179,6 +193,10 @@ class LeanQuizGame {
         this.roundScore = 0;
         this.currentQuestionIndex = 0;
         this.selectedAnswers = [];
+        this.hasSubmittedAnswer = false;
+        this.answersReceived = 0;
+        // Reset hasAnswered voor alle spelers
+        this.players.forEach(p => p.hasAnswered = false);
 
         if (this.currentRound > rondeConfig.length) {
             this.endGame();
@@ -190,7 +208,15 @@ class LeanQuizGame {
 
         // Update UI
         document.getElementById('current-round').textContent = this.currentRound;
-        document.getElementById('current-score').textContent = this.score;
+
+        // Verberg score voor host (speelt niet mee)
+        const scoreDisplay = document.querySelector('.score-display');
+        if (this.isHost) {
+            scoreDisplay.style.display = 'none';
+        } else {
+            scoreDisplay.style.display = 'block';
+            document.getElementById('current-score').textContent = this.score;
+        }
 
         if (this.isHost) {
             // Broadcast ronde start
@@ -219,7 +245,7 @@ class LeanQuizGame {
                     type: 'order',
                     items: shuffledAspecten,
                     correctOrder: gameData.aspecten.map(a => a.naam),
-                    labels: ['Bovenste', 'Middelste', 'Onderste']
+                    labels: ['Links (lichtgroen)', 'Midden (donkergroen)', 'Rechts (geel)']
                 });
                 break;
 
@@ -303,6 +329,31 @@ class LeanQuizGame {
         container.innerHTML = '';
 
         const submitBtn = document.getElementById('btn-submit-answer');
+        const hostControls = document.getElementById('host-controls');
+
+        // Als host: toon controle-view in plaats van antwoordopties
+        if (this.isHost) {
+            submitBtn.style.display = 'none';
+            hostControls.style.display = 'block';
+            this.answersReceived = 0;
+            document.getElementById('answers-received').textContent = '0';
+            document.getElementById('total-players').textContent = this.players.length;
+
+            // Toon de vraag info voor de host
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'host-info';
+            infoDiv.innerHTML = `<h4>Huidige vraag voor spelers:</h4><p>${config.beschrijving}</p>`;
+            if (question.description) {
+                infoDiv.innerHTML += `<p><em>${question.description}</em></p>`;
+            }
+            container.appendChild(infoDiv);
+
+            this.questionStartTime = Date.now();
+            return;
+        }
+
+        // Voor spelers: toon normale antwoordopties
+        hostControls.style.display = 'none';
 
         switch (question.type) {
             case 'order':
@@ -379,6 +430,13 @@ class LeanQuizGame {
 
     // Dien antwoord in
     submitAnswer() {
+        // Host speelt niet mee
+        if (this.isHost) return;
+
+        // Voorkom dubbele submits
+        if (this.hasSubmittedAnswer) return;
+        this.hasSubmittedAnswer = true;
+
         const question = this.currentQuestions[this.currentQuestionIndex];
         const config = rondeConfig[this.currentRound - 1];
         const container = document.getElementById('answers-container');
@@ -443,8 +501,16 @@ class LeanQuizGame {
             });
         }
 
-        // Toon feedback
-        this.showFeedback(question, userAnswer, isCorrect, questionScore);
+        // Sla feedback data op voor later
+        this.pendingFeedback = {
+            question: question,
+            userAnswer: userAnswer,
+            isCorrect: isCorrect,
+            points: questionScore
+        };
+
+        // Toon wacht-scherm in plaats van direct feedback
+        this.showScreen('answerWaiting');
     }
 
     // Toon feedback na antwoord
@@ -496,18 +562,20 @@ class LeanQuizGame {
         document.getElementById('current-score').textContent = this.score;
 
         this.showScreen('feedback');
+        // Geen auto-timer meer - host bepaalt wanneer naar ranking
+    }
 
-        // Ga naar volgende vraag of ranking na 3 seconden
-        setTimeout(() => {
-            this.currentQuestionIndex++;
-
-            if (this.currentQuestionIndex < this.currentQuestions.length) {
-                this.showScreen('game');
-                this.showQuestion();
-            } else {
-                this.showRanking();
-            }
-        }, 3000);
+    // Toon opgeslagen feedback
+    showPendingFeedback() {
+        if (this.pendingFeedback) {
+            this.showFeedback(
+                this.pendingFeedback.question,
+                this.pendingFeedback.userAnswer,
+                this.pendingFeedback.isCorrect,
+                this.pendingFeedback.points
+            );
+            this.pendingFeedback = null;
+        }
     }
 
     // Timer starten
@@ -521,7 +589,11 @@ class LeanQuizGame {
 
             if (this.timeRemaining <= 0) {
                 clearInterval(this.timerInterval);
-                this.submitAnswer(); // Auto-submit bij timeout
+                // Alleen auto-submit als timerMode 'auto' is
+                if (this.timerMode === 'auto') {
+                    this.submitAnswer();
+                }
+                // Bij 'manual' mode: timer toont 0, wacht op host
             }
         }, 1000);
     }
@@ -543,21 +615,17 @@ class LeanQuizGame {
     showRanking() {
         clearInterval(this.timerInterval);
 
-        // Voor demo/solo spel, voeg jezelf toe aan players
-        if (this.players.length === 0 || !this.isHost) {
-            // Solo mode of als speler
+        // Host haalt spelers op van peer connection
+        if (this.isHost) {
+            this.players = peerConnection.getPlayers();
+        } else if (this.players.length === 0) {
+            // Speler zonder data van host: toon eigen score
             const myPlayer = {
                 id: 'self',
-                name: this.isHost ? 'Spelleider' : (peerConnection.playerName || 'Jij'),
+                name: peerConnection.playerName || 'Jij',
                 score: this.score
             };
-
-            if (this.isHost) {
-                this.players = [myPlayer, ...peerConnection.getPlayers()];
-            } else {
-                // Speler ziet alleen eigen score tot host update stuurt
-                this.players = [myPlayer];
-            }
+            this.players = [myPlayer];
         }
 
         // Sorteer op score
@@ -581,9 +649,13 @@ class LeanQuizGame {
             rankingEl.appendChild(div);
         });
 
-        // Toon volgende ronde knop alleen voor host
+        // Toon volgende ronde knop alleen voor host EN als er nog rondes zijn
         const nextBtn = document.getElementById('btn-next-round');
-        nextBtn.style.display = this.isHost ? 'block' : 'none';
+        const isLastRound = this.currentRound >= rondeConfig.length;
+        nextBtn.style.display = (this.isHost && !isLastRound) ? 'block' : 'none';
+
+        // Dynamische titel: Tussenstand of Eindstand
+        document.getElementById('ranking-title').textContent = isLastRound ? 'Eindstand' : 'Tussenstand';
 
         if (this.isHost) {
             peerConnection.broadcast({
@@ -603,6 +675,23 @@ class LeanQuizGame {
             document.getElementById(`${prefix}-${pos}-name`).textContent = player?.name || '-';
             document.getElementById(`${prefix}-${pos}-score`).textContent = player?.score || 0;
         });
+    }
+
+    // Host: Ronde voortijdig afsluiten
+    endRoundEarly() {
+        if (!this.isHost) return;
+
+        clearInterval(this.timerInterval);
+
+        // Reset hasAnswered voor volgende ronde
+        this.players.forEach(p => p.hasAnswered = false);
+
+        // Broadcast naar alle spelers om naar ranking te gaan
+        peerConnection.broadcast({
+            type: 'force-end-round'
+        });
+
+        this.showRanking();
     }
 
     // Volgende ronde
@@ -645,7 +734,31 @@ class LeanQuizGame {
             });
         }
 
+        // Toon juiste knoppen voor host/speler
+        if (this.isHost) {
+            document.getElementById('end-buttons-host').style.display = 'flex';
+            document.getElementById('end-message-player').style.display = 'none';
+        } else {
+            document.getElementById('end-buttons-host').style.display = 'none';
+            document.getElementById('end-message-player').style.display = 'block';
+        }
+
         this.showScreen('end');
+    }
+
+    // Replay alleen ronde 6
+    replayRound6() {
+        // Reset scores voor alle spelers
+        this.players.forEach(p => p.score = 0);
+
+        // Zet ronde op 5 zodat startRound() naar 6 gaat
+        this.currentRound = rondeConfig.length - 1;
+
+        peerConnection.broadcast({
+            type: 'replay-round6'
+        });
+
+        this.startRound();
     }
 
     // Reset spel
@@ -672,8 +785,11 @@ class LeanQuizGame {
 
             case 'game-start':
                 this.timeLimit = data.timeLimit;
+                this.timerMode = data.timerMode || 'auto';
                 this.score = 0;
                 this.currentRound = 0;
+                // Update totaal aantal rondes
+                document.getElementById('total-rounds').textContent = rondeConfig.length;
                 break;
 
             case 'round-start':
@@ -697,9 +813,29 @@ class LeanQuizGame {
                     const player = this.players.find(p => p.id === data.playerId);
                     if (player) {
                         player.score = data.totalScore;
+                        player.hasAnswered = true;
                         peerConnection.updatePlayerScore(data.playerId, data.totalScore);
                     }
+                    // Update antwoorden teller
+                    this.answersReceived = this.players.filter(p => p.hasAnswered).length;
+                    document.getElementById('answers-received').textContent = this.answersReceived;
+
+                    // Als alle spelers geantwoord hebben, ga automatisch naar ranking
+                    if (this.answersReceived >= this.players.length) {
+                        this.endRoundEarly();
+                    }
                 }
+                break;
+
+            case 'force-end-round':
+                // Spelleider heeft ronde afgesloten
+                clearInterval(this.timerInterval);
+                // Als speler nog niet geantwoord heeft, submit leeg antwoord
+                if (!this.hasSubmittedAnswer) {
+                    this.submitAnswer();
+                }
+                // Toon opgeslagen feedback
+                this.showPendingFeedback();
                 break;
 
             case 'show-ranking':
@@ -708,12 +844,21 @@ class LeanQuizGame {
                 break;
 
             case 'next-round':
-                this.startRound();
+                // Deelnemers hoeven hier niets te doen - ze ontvangen daarna 'round-start' met de vragen
+                // Reset alleen hasSubmittedAnswer voor de volgende ronde
+                this.hasSubmittedAnswer = false;
                 break;
 
             case 'game-end':
                 this.players = data.players;
                 this.endGame();
+                break;
+
+            case 'replay-round6':
+                // Host wil alleen ronde 6 opnieuw spelen
+                this.score = 0;
+                this.currentRound = rondeConfig.length - 1;
+                this.hasSubmittedAnswer = false;
                 break;
         }
     }

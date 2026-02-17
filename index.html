@@ -50,6 +50,10 @@
         <div id="lobby-screen" class="screen">
             <div class="container">
                 <h2>Lobby</h2>
+                <div class="join-url-display">
+                    <p>Deelnemers gaan naar:</p>
+                    <div class="url-box">menno-prins.github.io/lean-piramide-quiz</div>
+                </div>
                 <div class="game-code-display">
                     <p>Spelcode:</p>
                     <div id="display-code" class="code-box">------</div>
@@ -57,6 +61,19 @@
                 <div class="settings-group">
                     <label for="time-limit">Tijd per ronde (seconden):</label>
                     <input type="number" id="time-limit" value="60" min="10" max="300">
+                </div>
+                <div class="settings-group">
+                    <label>Afrond modus:</label>
+                </div>
+                <div class="settings-group timer-mode-options">
+                    <label class="radio-option">
+                        <input type="radio" name="timer-mode" value="auto" checked>
+                        <span>Automatisch na tijd</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="timer-mode" value="manual">
+                        <span>Alleen handmatig</span>
+                    </label>
                 </div>
                 <div class="players-section">
                     <h3>Deelnemers (<span id="player-count">0</span>)</h3>
@@ -78,7 +95,7 @@
         <!-- Spel Scherm -->
         <div id="game-screen" class="screen">
             <div class="game-header">
-                <div class="round-info">Ronde <span id="current-round">1</span> van 5</div>
+                <div class="round-info">Ronde <span id="current-round">1</span> van <span id="total-rounds">6</span></div>
                 <div class="timer-display">
                     <div id="timer" class="timer">60</div>
                 </div>
@@ -93,6 +110,11 @@
                     <div id="question-description" class="question-description"></div>
                     <div id="answers-container" class="answers-container"></div>
                     <button id="btn-submit-answer" class="btn btn-primary" style="display: none;">Bevestig Antwoord</button>
+                    <!-- Host controls -->
+                    <div id="host-controls" class="host-controls" style="display: none;">
+                        <p class="host-status">Wachten op spelers... <span id="answers-received">0</span>/<span id="total-players">0</span> antwoorden</p>
+                        <button id="btn-end-round" class="btn btn-secondary">Ronde Afsluiten</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -106,10 +128,19 @@
             </div>
         </div>
 
+        <!-- Wacht na antwoord scherm -->
+        <div id="answer-waiting-screen" class="screen">
+            <div class="container">
+                <h2>Antwoord ingediend!</h2>
+                <div class="loader"></div>
+                <p>Wachten tot de spelleider de ronde afsluit...</p>
+            </div>
+        </div>
+
         <!-- Ranking Scherm -->
         <div id="ranking-screen" class="screen">
             <div class="container">
-                <h2>Tussenstand</h2>
+                <h2 id="ranking-title">Tussenstand</h2>
                 <div id="podium" class="podium">
                     <div class="podium-place second">
                         <div class="podium-name" id="podium-2-name">-</div>
@@ -154,7 +185,11 @@
                     </div>
                 </div>
                 <div id="final-ranking" class="full-ranking"></div>
-                <button id="btn-play-again" class="btn btn-primary">Opnieuw Spelen</button>
+                <div id="end-buttons-host" class="button-group" style="display: none;">
+                    <button id="btn-replay-round6" class="btn btn-primary">Ronde 6 Opnieuw</button>
+                    <button id="btn-play-again" class="btn btn-secondary">Heel Spel Opnieuw</button>
+                </div>
+                <p id="end-message-player" style="display: none;">Wachten op spelleider...</p>
             </div>
         </div>
     </div>
