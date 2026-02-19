@@ -238,7 +238,7 @@ class LeanQuizGame {
         this.currentQuestions = [];
 
         switch (config.type) {
-            case 'aspecten':
+            case 'aspecten': {
                 // Shuffle aspecten voor de vraag
                 const shuffledAspecten = [...gameData.aspecten].sort(() => Math.random() - 0.5);
                 this.currentQuestions.push({
@@ -248,8 +248,9 @@ class LeanQuizGame {
                     labels: ['Links (lichtgroen)', 'Midden (donkergroen)', 'Rechts (geel)']
                 });
                 break;
+            }
 
-            case 'treden':
+            case 'treden': {
                 // Shuffle treden voor de vraag
                 const shuffledTreden = [...gameData.treden].sort(() => Math.random() - 0.5);
                 this.currentQuestions.push({
@@ -259,22 +260,25 @@ class LeanQuizGame {
                     labels: ['Trede 1 (laag)', 'Trede 2', 'Trede 3', 'Trede 4', 'Trede 5', 'Trede 6 (hoog)']
                 });
                 break;
+            }
 
-            case 'bouwblokken-selectie':
-                // Vraag welke bouwblokken bij trede 1 horen
-                const trede1Blokken = gameData.getBouwblokkenByTrede(config.targetTrede);
-                const andereBlokken = gameData.bouwblokken.filter(b => b.trede !== config.targetTrede);
-                const alleOpties = [...trede1Blokken, ...andereBlokken.slice(0, 5)].sort(() => Math.random() - 0.5);
+            case 'bouwblokken-selectie': {
+                // Vraag welke bouwblokken bij de doeltrede horen
+                const tredeBlokken = gameData.getBouwblokkenByTrede(config.targetTrede);
+                const andereBlokken = [...gameData.bouwblokken.filter(b => b.trede !== config.targetTrede)]
+                    .sort(() => Math.random() - 0.5); // Shuffle foute opties
+                const alleOpties = [...tredeBlokken, ...andereBlokken.slice(0, 5)].sort(() => Math.random() - 0.5);
 
                 this.currentQuestions.push({
                     type: 'multi-select',
                     options: alleOpties.map(b => b.naam),
-                    correctAnswers: trede1Blokken.map(b => b.naam),
+                    correctAnswers: tredeBlokken.map(b => b.naam),
                     targetTrede: config.targetTrede
                 });
                 break;
+            }
 
-            case 'bouwblokken-trede':
+            case 'bouwblokken-trede': {
                 // Random bouwblokken, speler moet trede kiezen
                 const tredes23 = gameData.getBouwblokkenByTredes(config.targetTredes);
                 const shuffled = [...tredes23].sort(() => Math.random() - 0.5);
@@ -290,8 +294,9 @@ class LeanQuizGame {
                     });
                 });
                 break;
+            }
 
-            case 'volwassenheid':
+            case 'volwassenheid': {
                 // Random bouwblokken met volwassenheidsniveau
                 const randomBlokken = gameData.getRandomVolwassenheidVragen(config.aantalVragen);
                 const alleBloknamen = gameData.getAllBouwblokNamen();
@@ -314,6 +319,7 @@ class LeanQuizGame {
                     });
                 });
                 break;
+            }
         }
     }
 
@@ -615,6 +621,58 @@ class LeanQuizGame {
     showRanking() {
         clearInterval(this.timerInterval);
 
+        // Toon feedback in ranking-scherm voor deelnemers (niet voor host)
+        const feedbackSection = document.getElementById('player-feedback-section');
+        if (!this.isHost && this.pendingFeedback) {
+            const fb = this.pendingFeedback;
+            const container = document.getElementById('player-feedback-content');
+            container.innerHTML = '';
+
+            document.getElementById('player-feedback-title').textContent =
+                fb.isCorrect ? 'Jouw antwoorden - Goed gedaan!' : 'Jouw antwoorden - Helaas...';
+
+            switch (fb.question.type) {
+                case 'order':
+                    fb.question.correctOrder.forEach((correct, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'feedback-item ' + (fb.userAnswer[index] === correct ? 'correct' : 'incorrect');
+                        div.innerHTML = `
+                            <span>${fb.question.labels[index]}: ${fb.userAnswer[index] || '(niet ingevuld)'}</span>
+                            <span>${fb.userAnswer[index] === correct ? '✓' : '✗ → ' + correct}</span>
+                        `;
+                        container.appendChild(div);
+                    });
+                    break;
+                case 'multi-select':
+                    fb.question.correctAnswers.forEach(correct => {
+                        const div = document.createElement('div');
+                        const wasSelected = fb.userAnswer.includes(correct);
+                        div.className = 'feedback-item ' + (wasSelected ? 'correct' : 'incorrect');
+                        div.innerHTML = `
+                            <span>${correct}</span>
+                            <span>${wasSelected ? '✓ Geselecteerd' : '✗ Niet geselecteerd'}</span>
+                        `;
+                        container.appendChild(div);
+                    });
+                    break;
+                case 'single-choice':
+                    const div = document.createElement('div');
+                    div.className = 'feedback-item ' + (fb.isCorrect ? 'correct' : 'incorrect');
+                    div.innerHTML = `
+                        <span>Jouw antwoord: ${fb.userAnswer || '(niet ingevuld)'}</span>
+                        <span>${fb.isCorrect ? '✓' : '✗ Correct: ' + fb.question.correctAnswer}</span>
+                    `;
+                    container.appendChild(div);
+                    break;
+            }
+
+            document.getElementById('player-round-score').textContent = `+${fb.points} punten`;
+            feedbackSection.style.display = 'block';
+            this.pendingFeedback = null;
+        } else {
+            feedbackSection.style.display = 'none';
+        }
+
         // Host haalt spelers op van peer connection
         if (this.isHost) {
             this.players = peerConnection.getPlayers();
@@ -834,8 +892,7 @@ class LeanQuizGame {
                 if (!this.hasSubmittedAnswer) {
                     this.submitAnswer();
                 }
-                // Toon opgeslagen feedback
-                this.showPendingFeedback();
+                // Feedback wordt gecombineerd getoond in showRanking() via show-ranking message
                 break;
 
             case 'show-ranking':
