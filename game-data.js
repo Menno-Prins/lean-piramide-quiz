@@ -192,7 +192,7 @@ const rondeConfig = [
     {
         nummer: 1,
         titel: "De 3 Aspecten",
-        beschrijving: "Plaats de drie aspecten rechts van de piramide op de juiste positie (van boven naar beneden)",
+        beschrijving: "De piramide bestaat uit bouwblokken in drie categorieën die ieder een eigen kleur hebben. Welke kleur is wat?",
         type: "aspecten",
         aantalVragen: 1, // 1 vraag met 3 items om te plaatsen
         puntenPerCorrect: 100
@@ -208,7 +208,7 @@ const rondeConfig = [
     {
         nummer: 3,
         titel: "Bouwblokken Trede 1 - Inzicht",
-        beschrijving: "Welke 7 bouwblokken horen bij de eerste trede 'Inzicht'?",
+        beschrijving: "Welke 7 bouwblokken zijn onderdeel van de eerste trede 'Inzicht'?",
         type: "bouwblokken-selectie",
         targetTrede: 1,
         aantalVragen: 7,
@@ -216,15 +216,24 @@ const rondeConfig = [
     },
     {
         nummer: 4,
-        titel: "Bouwblokken Trede 2 & 3",
-        beschrijving: "Plaats de bouwblokken bij de juiste trede (Beheersen of Verbeteren)",
-        type: "bouwblokken-trede",
-        targetTredes: [2, 3],
-        aantalVragen: 5, // 5 random bouwblokken
-        puntenPerCorrect: 150
+        titel: "Bouwblokken Trede 2 - Beheersen",
+        beschrijving: "Welke 6 bouwblokken zijn onderdeel van de tweede trede 'Beheersen'?",
+        type: "bouwblokken-selectie",
+        targetTrede: 2,
+        aantalVragen: 6,
+        puntenPerCorrect: 100
     },
     {
         nummer: 5,
+        titel: "Bouwblokken Trede 3 - Verbeteren",
+        beschrijving: "Welke 5 bouwblokken zijn onderdeel van de derde trede 'Verbeteren'?",
+        type: "bouwblokken-selectie",
+        targetTrede: 3,
+        aantalVragen: 5,
+        puntenPerCorrect: 100
+    },
+    {
+        nummer: 6,
         titel: "Volwassenheidsniveau",
         beschrijving: "Koppel de omschrijving van het hoogste volwassenheidsniveau aan het juiste bouwblok",
         type: "volwassenheid",
