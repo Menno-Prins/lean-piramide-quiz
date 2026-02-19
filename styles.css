@@ -523,6 +523,23 @@ h3 {
     margin-top: 20px;
 }
 
+/* Feedback sectie in ranking scherm (voor deelnemers) */
+#player-feedback-section {
+    margin-bottom: 20px;
+}
+
+#player-feedback-section h3 {
+    font-size: 1.2rem;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.feedback-divider {
+    border: none;
+    border-top: 2px solid #e0e0e0;
+    margin: 20px 0;
+}
+
 /* Podium */
 .podium {
     display: flex;
